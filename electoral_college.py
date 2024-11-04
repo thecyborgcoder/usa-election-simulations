@@ -3,22 +3,23 @@ import random
 
 # State, Electoral Votes, Probability of DEM win
 states = [
-    Event("ME2", 1, 0.8912),
-    Event("NM", 5, 0.9098),
-    Event("VA", 13, 0.8835),
-    Event("NH", 5, 0.8261),
-    Event("MN", 10, 0.8723),
-    Event("WI", 10, 0.5348),
-    Event("MI", 15, 0.6061),
-    Event("NV", 6, 0.4961),
-    Event("PA", 19, 0.4838),
-    Event("NC", 16, 0.3658),
-    Event("GA", 16, 0.3396),
-    Event("AZ", 11, 0.329),
-    Event("FL", 30, 0.1148),
-    Event("TX", 40, 0.0938),
-    Event("OH", 17, 0.0783),
-    Event("NE2", 1, 0.1178),
+    Event("NE2", 1, 0.891),
+    Event("NM", 5, 0.912),
+    Event("VA", 13, 0.887),
+    Event("NH", 5, 0.834),
+    Event("MN", 10, 0.88),
+    Event("WI", 10, 0.557),
+    Event("MI", 15, 0.607),
+    Event("NV", 6, 0.47),
+    Event("PA", 19, 0.491),
+    Event("NC", 16, 0.367),
+    Event("GA", 16, 0.379),
+    Event("AZ", 11, 0.33),
+    Event("FL", 30, 0.116),
+    Event("TX", 40, 0.091),
+    Event("OH", 17, 0.08),
+    Event("ME2", 1, 0.128),
+    Event("IA", 1, 0.149),
 ]
 buckets = {
     "GOP by 215+": {"min": 0, "max": 161, "count": 0},
@@ -40,22 +41,74 @@ buckets = {
     "GOP Blowout": {"min": 0, "max": 219, "count": 0},
     "GOP Win": {"min": 0, "max": 268, "count": 0},
     "Tie": {"min": 269, "max": 269, "count": 0},
-    "Dem Win": {"min": 269, "max": 538, "count": 0},  
+    "Dem Win": {"min": 270, "max": 538, "count": 0},  
     "Dem Blowout": {"min": 319, "max": 538, "count": 0},
 }
-max_offset_scale = 0.1
-simulation = Simulation(states, max_offset_scale, True)
-initial_votes = 192
 
-for _ in range(100000):
-    simulation.set_offset_scale(max_offset_scale * random.random())
-    simulation.run()
+initial_votes = 193
+
+simulation_independent = Simulation(states, 0.01, False)
+simulation_offset_dependent = Simulation(states, 0.01, False)
+simulation_very_low_variation_cutoff = Simulation(states, 0.01, True)
+simulation_low_variation_cutoff = Simulation(states, 0.05, True)
+simulation_mid_variation_cutoff = Simulation(states, 0.1, True)
+simulation_high_variation_cutoff = Simulation(states, 0.15, True)
+simulation_very_high_variation_cutoff = Simulation(states, 0.2, True)
+
+# Indepentent simulations. Each event is independent (mostly) of the others.
+for _ in range(5000):
+    simulation_independent.run()
     for bucket in buckets.values():
-        if bucket["min"] <= simulation.total_value + initial_votes <= bucket["max"]:
+        if bucket["min"] <= simulation_independent.total_value + initial_votes <= bucket["max"]:
+            bucket["count"] += 1
+
+# Offset simulations. Each event is dependent on a global offset.
+for _ in range(20000):
+    simulation_offset_dependent.set_offset_scale(0.25 * random.random())
+    simulation_offset_dependent.run()
+    for bucket in buckets.values():
+        if bucket["min"] <= simulation_offset_dependent.total_value + initial_votes <= bucket["max"]:
+            bucket["count"] += 1
+
+# Cutoff simulations with very low variation. Each event happens in order of probability, with a cutoff.
+for _ in range(10000):
+    simulation_very_low_variation_cutoff.run()
+    for bucket in buckets.values():
+        if bucket["min"] <= simulation_very_low_variation_cutoff.total_value + initial_votes <= bucket["max"]:
+            bucket["count"] += 1
+
+# Cutoff simulations with low variation. Each event happens in order of probability, with a cutoff.
+for _ in range(15000):
+    simulation_low_variation_cutoff.set_offset_scale(0.05 * random.random())
+    simulation_low_variation_cutoff.run()
+    for bucket in buckets.values():
+        if bucket["min"] <= simulation_low_variation_cutoff.total_value + initial_votes <= bucket["max"]:
+            bucket["count"] += 1
+
+# Cutoff simulations with mid variation. Each event happens in order of probability, with a cutoff.
+for _ in range(20000):
+    simulation_mid_variation_cutoff.set_offset_scale(0.1 * random.random())
+    simulation_mid_variation_cutoff.run()
+    for bucket in buckets.values():
+        if bucket["min"] <= simulation_mid_variation_cutoff.total_value + initial_votes <= bucket["max"]:
+            bucket["count"] += 1
+
+# Cutoff simulations with high variation. Each event happens in order of probability, with a cutoff.
+for _ in range(25000):
+    simulation_high_variation_cutoff.set_offset_scale(0.15 * random.random())
+    simulation_high_variation_cutoff.run()
+    for bucket in buckets.values():
+        if bucket["min"] <= simulation_high_variation_cutoff.total_value + initial_votes <= bucket["max"]:
+            bucket["count"] += 1
+
+# Cutoff simulations with very high variation. Each event happens in order of probability, with a cutoff.
+for _ in range(15000):
+    simulation_very_high_variation_cutoff.set_offset_scale(0.15 * random.random())
+    simulation_very_high_variation_cutoff.run()
+    for bucket in buckets.values():
+        if bucket["min"] <= simulation_very_high_variation_cutoff.total_value + initial_votes <= bucket["max"]:
             bucket["count"] += 1
 
 for bucket_name, bucket in buckets.items():
     percentage = (bucket['count'] / 100000) * 100
     print(f"{bucket_name}: {bucket['count']} ({percentage:.2f}%)")
-
-print(simulation.avg_offset)
