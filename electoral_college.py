@@ -2,12 +2,30 @@ from correlated_events_simulation import Event, Simulation
 import random
 
 # State, Electoral Votes, Probability of DEM win
+# initial_votes = 193
+# states = [
+#     Event("NE2", 1, 0.891),
+#     Event("NM", 5, 0.912),
+#     Event("VA", 13, 0.887),
+#     Event("NH", 5, 0.834),
+#     Event("MN", 10, 0.88),
+#     Event("WI", 10, 0.557),
+#     Event("MI", 15, 0.607),
+#     Event("NV", 6, 0.47),
+#     Event("PA", 19, 0.491),
+#     Event("NC", 16, 0.367),
+#     Event("GA", 16, 0.379),
+#     Event("AZ", 11, 0.33),
+#     Event("FL", 30, 0.116),
+#     Event("TX", 40, 0.091),
+#     Event("OH", 17, 0.08),
+#     Event("ME2", 1, 0.128),
+#     Event("IA", 1, 0.149),
+# ]
+
+# Swing States, Electoral Votes, Probability of DEM win
+initial_votes = 226
 states = [
-    Event("NE2", 1, 0.891),
-    Event("NM", 5, 0.912),
-    Event("VA", 13, 0.887),
-    Event("NH", 5, 0.834),
-    Event("MN", 10, 0.88),
     Event("WI", 10, 0.557),
     Event("MI", 15, 0.607),
     Event("NV", 6, 0.47),
@@ -15,12 +33,8 @@ states = [
     Event("NC", 16, 0.367),
     Event("GA", 16, 0.379),
     Event("AZ", 11, 0.33),
-    Event("FL", 30, 0.116),
-    Event("TX", 40, 0.091),
-    Event("OH", 17, 0.08),
-    Event("ME2", 1, 0.128),
-    Event("IA", 1, 0.149),
 ]
+
 buckets = {
     "GOP by 215+": {"min": 0, "max": 161, "count": 0},
     "GOP by 155-214": {"min": 162, "max": 191, "count": 0},
@@ -44,8 +58,6 @@ buckets = {
     "Dem Win": {"min": 270, "max": 538, "count": 0},  
     "Dem Blowout": {"min": 319, "max": 538, "count": 0},
 }
-
-initial_votes = 193
 
 simulation_independent = Simulation(states, 0.01, False)
 simulation_offset_dependent = Simulation(states, 0.01, False)
@@ -103,12 +115,21 @@ for _ in range(25000):
 
 # Cutoff simulations with very high variation. Each event happens in order of probability, with a cutoff.
 for _ in range(15000):
-    simulation_very_high_variation_cutoff.set_offset_scale(0.15 * random.random())
+    simulation_very_high_variation_cutoff.set_offset_scale(0.2 * random.random())
     simulation_very_high_variation_cutoff.run()
     for bucket in buckets.values():
         if bucket["min"] <= simulation_very_high_variation_cutoff.total_value + initial_votes <= bucket["max"]:
             bucket["count"] += 1
 
+
+total_sim_runs = (simulation_independent.total_runs 
+                 + simulation_offset_dependent.total_runs 
+                 + simulation_very_low_variation_cutoff.total_runs 
+                 + simulation_low_variation_cutoff.total_runs 
+                 + simulation_mid_variation_cutoff.total_runs 
+                 + simulation_high_variation_cutoff.total_runs 
+                 + simulation_very_high_variation_cutoff.total_runs)
+
 for bucket_name, bucket in buckets.items():
-    percentage = (bucket['count'] / 100000) * 100
+    percentage = (bucket['count'] / total_sim_runs) * 100
     print(f"{bucket_name}: {bucket['count']} ({percentage:.2f}%)")
