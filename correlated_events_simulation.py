@@ -57,9 +57,10 @@ class Simulation:
     
     def _ordered_cutoff_run(self):
         total_value = 0
-        cutoff = ( max(0, min(1, np.random.normal(0.5, 0.2) ) ) + random.random() ) / 2
+        # cutoff = ( max(0, min(1, np.random.normal(0.5, 0.15) ) ) + random.random() ) / 2
+        # cutoff = ( max(0, min(1, np.random.normal(0.5, 0.12) ) ) + max(0, min(1, np.random.normal(0.5, 0.2) ) ) + random.random() ) / 3
         # cutoff = random.random()
-        # cutoff = max(0, min(1, np.random.normal(0.5, 0.18) ) )
+        cutoff = max(0, min(1, np.random.normal(0.5, 0.14) ) )
         for event in self.events:
             event_offset = np.random.normal(0, self.offset_scale)
             adjustment_to_center = -self.avg_offset * random.random()
